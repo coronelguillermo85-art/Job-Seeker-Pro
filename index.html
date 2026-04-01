@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guillermo Job Seeker Pro</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100vh;
+      background: #050a14;
+      color: #e2e8f0;
+      font-family: 'Share Tech Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 8px 32px;
+      overflow-x: hidden;
+    }
+    h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(10px, 2.2vw, 18px);
+      color: #60a5fa;
+      text-shadow: 0 0 18px #2563eb88;
+      letter-spacing: 1px;
+      text-align: center;
+      margin-top: 4px;
+    }
+    .sub {
+      font-size: clamp(9px, 1.4vw, 12px);
+      color: #64748b;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    #score-ticker {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(8px, 1.5vw, 12px);
+      color: #facc15;
+      letter-spacing: 2px;
+      text-align: center;
+      min-height: 20px;
+    }
+    #wrap { width: 100%; max-width: 900px; }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border: 2px solid #1e3a5f;
+      border-radius: 8px;
+      box-shadow: 0 0 40px #0d2a5044;
+    }
+    #ui-row, #mob-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 900px;
+    }
+    button {
+      background: #0f2040;
+      color: #93c5fd;
+      border: 1px solid #1e40af;
+      border-radius: 6px;
+      padding: 9px 18px;
+      cursor: pointer;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 1px;
+      transition: background .15s, border-color .15s, transform .05s;
+    }
+    button:hover { background: #1e3a6a; border-color: #3b82f6; }
+    button:active { transform: scale(.97); }
+    .mob {
+      background: #0d1a2e;
+      border: 1px solid #1e293b;
+      color: #60a5fa;
+      font-size: clamp(12px, 3vw, 18px);
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .mob:active { background: #1e3a5f; }
+    #kbhint {
+      font-size: 11px;
+      color: #334155;
+      text-align: center;
+      letter-spacing: 1px;
+      max-width: 980px;
+    }
+    .cv-panel {
+      width: 100%;
+      max-width: 900px;
+      background: #09111f;
+      border: 1px solid #1e3a5f;
+      border-radius: 12px;
+      box-shadow: 0 0 30px #0d2a5030;
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+    .cv-title {
+      color: #93c5fd;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(10px, 1.8vw, 14px);
+      line-height: 1.6;
+    }
+    .cv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .cv-card {
+      background: #0b1628;
+      border: 1px solid #1f3555;
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .cv-card h3 {
+      color: #facc15;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .cv-card p, .cv-card li {
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .cv-card ul {
+      padding-left: 18px;
+      display: grid;
+      gap: 4px;
+    }
+    .cv-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .cv-note {
+      color: #64748b;
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 GUILLERMO JOB SEEKER PRO</h1>
+  <p class="sub">BEAT'EM UP LABORAL — BUENOS AIRES 2026</p>
+  <div id="score-ticker">LISTOS LOS CVs...</div>
+
+  <div id="wrap">
+    <canvas id="gc" width="900" height="480"></canvas>
+  </div>
+
+  <div id="ui-row">
+    <button id="btn-start">▶ INICIAR</button>
+    <button id="btn-reset">↺ REINICIAR</button>
+    <button id="btn-cv">📄 VER CV REAL</button>
+  </div>
+
+  <div id="mob-row">
+    <button class="mob" id="m-left">◀</button>
+    <button class="mob" id="m-jump">↑</button>
+    <button class="mob" id="m-cv-attack">📄 CV</button>
+    <button class="mob" id="m-right">▶</button>
+  </div>
+
+  <p id="kbhint">← → mover | Z lanzar CV | ↑ / W saltar | tocar enemigos o código ATS te saca vida | R reiniciar | Enter abre tu CV cuando llegás al final</p>
+
+  <section class="cv-panel" id="cv-real">
+    <div class="cv-title">CV REAL — GUILLERMO CORONEL</div>
+    <div class="cv-grid">
+      <div class="cv-card">
+        <h3>Resumen profesional</h3>
+        <p>Profesional con más de 9 años de trayectoria en tecnología, atención al cliente y gestión de servicios. Experiencia en liderazgo de equipos de gran escala, resolución de incidencias críticas y optimización de procesos.</p>
+      </div>
+      <div class="cv-card">
+        <h3>Experiencia destacada</h3>
+        <ul>
+          <li>Agente de Soporte Técnico — CIST UNLaM</li>
+          <li>Team Leader — CIST UNLaM</li>
+          <li>Asesor de CX & Redes Sociales — Cat Technologies</li>
+          <li>Coordinador de Prensa — Leamos Un Libro</li>
+          <li>Operador Social — Plan Más Vida</li>
+          <li>Data Entry — INDEC / UNLaM</li>
+          <li>Voluntario de Chat — Aquí Estoy</li>
+        </ul>
+      </div>
+      <div class="cv-card">
+        <h3>Educación</h3>
+        <ul>
+          <li>Analista en Relaciones Públicas — UNLaM</li>
+          <li>Tecnicatura en Gestión e Innovación Pública — UNER</li>
+          <li>Tecnicatura en Servicios Sociales — UNLaM</li>
+        </ul>
+      </div>
+      <div class="cv-card">
+        <h3>Skills</h3>
+        <ul>
+          <li>Soporte Técnico N1/N2</li>
+          <li>Liderazgo de equipos 35+ personas</li>
+          <li>CRM / Ticketing / Infraestructura IT</li>
+          <li>KPIs / Gestión de crisis</li>
+          <li>Comunicación institucional</li>
+          <li>Empatía / Adaptabilidad / Orientación al cliente</li>
+        </ul>
+      </div>
+    </div>
+    <div class="cv-actions">
+      <button id="btn-open-pdf">📎 ABRIR PDF DEL CV</button>
+    </div>
+    <p class="cv-note">El botón “Ver CV real” y Enter en la pantalla final abren tu CV en Google Drive. Dejé el sistema sin audio para evitar bugs y facilitar el deploy.</p>
+  </section>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const canvas = document.getElementById('gc');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+      const FLOOR = H - 110;
+      const ticker = document.getElementById('score-ticker');
+      const MAX_SCORE = 1000000;
+      const PDF_URL = 'https://drive.google.com/uc?export=download&id=1LsgIr-vuDw0FUowzPHhzODw-TPC_MqPa';
+
+      let running = false;
+      let over = false;
+      let win = false;
+      let badWin = false;
+      let keys = {};
+      let score = 0;
+      let xpIdx = 0;
+      let spawnT = 90;
+      let gameTime = 0;
+      let bgOff = 0;
+      let wave = 0;
+      let hiScore = parseInt(localStorage.getItem('gjsHi') || '0', 10);
+
+      let projectiles = [];
+      let enemyShots = [];
+      let enemies = [];
+      let parts = [];
+      let msgs = [];
+
+      const XP = [
+        '+10 XP Soporte Técnico',
+        '+15 XP Team Leader',
+        '+20 XP RRPP & Comunicación',
+        '+25 XP Innovación Pública',
+        '+30 XP IA + Música + MIDI',
+        '+50 XP COMBO DESTRUCTOR!'
+      ];
+
+      const CODE_SNIPPETS = [
+        'if(!match) reject();',
+        'cv.score = 0;',
+        'while(true){form++;}',
+        'throw new Error("ATS");'
+      ];
+
+      const ENEMY_DEFS = [
+        { type: 'ninja', name: 'Reclutador Ninja', w: 38, h: 60, hp: 2, maxHp: 2, speed: 1.6, shootCooldown: 9999 },
+        { type: 'ghost', name: 'HR Fantasma', w: 40, h: 64, hp: 2, maxHp: 2, speed: 1.2, shootCooldown: 9999 },
+        { type: 'ats', name: 'ATS Destructor', w: 40, h: 66, hp: 3, maxHp: 3, speed: 1.0, shootCooldown: 120 },
+        { type: 'form', name: 'Formulario Eterno', w: 42, h: 66, hp: 2, maxHp: 2, speed: 1.5, shootCooldown: 9999 },
+        { type: 'troll', name: 'LinkedIn Troll', w: 44, h: 62, hp: 2, maxHp: 2, speed: 2.0, shootCooldown: 9999 },
+        { type: 'boss', name: 'JEFE RRHH BOSS', w: 58, h: 78, hp: 8, maxHp: 8, speed: 0.9, shootCooldown: 9999 }
+      ];
+
+      const player = {
+        x: 110, y: FLOOR, w: 46, h: 72, vx: 0, vy: 0, speed: 4.8, onGround: true,
+        facing: 1, cooldown: 0, hp: 5, maxHp: 5, frame: 0, fTimer: 0, throwing: 0, invuln: 0
+      };
+
+      const buildingsData = [
+        { w: 80, h: 150 }, { w: 55, h: 100 }, { w: 100, h: 190 }, { w: 70, h: 130 }, { w: 90, h: 170 },
+        { w: 65, h: 95 }, { w: 110, h: 210 }, { w: 75, h: 140 }, { w: 85, h: 120 }, { w: 60, h: 110 }
+      ];
+      const buildingColors = ['#0d1a2e', '#111e33', '#0a1424', '#131f36'];
+
+      function openPDF() {
+        window.open('https://drive.google.com/file/d/1LsgIr-vuDw0FUowzPHhzODw-TPC_MqPa/view?usp=sharing', '_blank', 'noopener,noreferrer');
+      }
+
+      function scrollToCV() {
+        document.getElementById('cv-real').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      function reset() {
+        running = false;
+        over = false;
+        win = false;
+        badWin = false;
+        keys = {};
+        score = 0;
+        xpIdx = 0;
+        spawnT = 90;
+        gameTime = 0;
+        bgOff = 0;
+        wave = 0;
+        projectiles = [];
+        enemyShots = [];
+        enemies = [];
+        parts = [];
+        msgs = [];
+        Object.assign(player, {
+          x: 110, y: FLOOR, vx: 0, vy: 0, onGround: true, facing: 1,
+          cooldown: 0, hp: 5, frame: 0, fTimer: 0, throwing: 0, invuln: 0
+        });
+        ticker.textContent = 'LISTOS LOS CVs...';
+        draw();
+      }
+
+      function start() {
+        if (!running && !over && !win && !badWin) {
+          running = true;
+          requestAnimationFrame(loop);
+        }
+      }
+
+      function rect(a, b) {
+        return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+      }
+
+      function addMsg(text, x, y, color = '#f8fafc') {
+        msgs.push({ text, x, y, life: 90, color });
+      }
+
+      function burst(x, y, big = false) {
+        const colors = ['#93c5fd', '#60a5fa', '#facc15', '#a5f3fc', '#86efac', '#fde68a'];
+        const n = big ? 18 : 10;
+        for (let i = 0; i < n; i++) {
+          parts.push({
+            x, y,
+            vx: (Math.random() - 0.5) * (big ? 8 : 5),
+            vy: (Math.random() - 0.5) * (big ? 8 : 5),
+            life: 35 + Math.random() * 20,
+            col: colors[Math.floor(Math.random() * colors.length)]
+          });
+        }
+      }
+
+      function drawPixelText(text, x, y, color = '#fff', font = 'bold 12px monospace') {
+        ctx.font = font;
+        ctx.fillStyle = color;
+        ctx.fillText(text, x, y);
+      }
+
+      function drawBG() {
+        ctx.fillStyle = '#070e1a';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#ffffff';
+        const stars = [[50,15],[130,8],[240,25],[380,5],[510,18],[640,12],[750,26],[820,7],[880,20],[170,40],[430,35],[700,42]];
+        for (const [sx, sy] of stars) {
+          ctx.globalAlpha = 0.5 + Math.sin(gameTime * 0.04 + sx) * 0.3;
+          ctx.fillRect(sx, sy, 2, 2);
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#fde68a';
+        ctx.beginPath(); ctx.arc(820, 55, 26, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#070e1a';
+        ctx.beginPath(); ctx.arc(834, 47, 22, 0, Math.PI * 2); ctx.fill();
+
+        let bx = -(bgOff * 0.25 % 940);
+        buildingsData.forEach((b, i) => {
+          const by = FLOOR - b.h + 14;
+          ctx.fillStyle = buildingColors[i % buildingColors.length];
+          ctx.fillRect(bx, by, b.w, b.h + 20);
+          const wCols = Math.floor(b.w / 14);
+          const wRows = Math.floor(b.h / 16);
+          for (let wr = 0; wr < wRows; wr++) {
+            for (let wc = 0; wc < wCols; wc++) {
+              const seed = (i * 31 + wr * 7 + wc * 13) % 17;
+              ctx.fillStyle = seed < 5 ? '#3b82f6' : seed < 8 ? '#60a5fa20' : '#1e293b';
+              ctx.fillRect(bx + wc * 14 + 3, by + wr * 16 + 4, 8, 8);
+            }
+          }
+          bx += b.w + 8;
+        });
+
+        ctx.fillStyle = '#1e293b'; ctx.fillRect(0, FLOOR + 72, W, H);
+        ctx.fillStyle = '#374151'; ctx.fillRect(0, FLOOR + 72, W, 6);
+        ctx.fillStyle = '#111827'; ctx.fillRect(0, FLOOR + 88, W, 60);
+        ctx.fillStyle = '#d97706';
+        for (let i = -80; i < W + 80; i += 72) {
+          const mx = ((i + (bgOff * 4)) % (W + 144)) - 72;
+          ctx.fillRect(mx, FLOOR + 108, 38, 6);
+        }
+        ctx.fillStyle = '#0f172a'; ctx.fillRect(0, FLOOR + 68, W, 6);
+      }
+
+      function drawHUD() {
+        ctx.fillStyle = 'rgba(5,10,20,0.92)'; ctx.fillRect(0, 0, W, 72);
+        ctx.strokeStyle = '#1e3a5f'; ctx.strokeRect(0, 71, W, 1);
+        drawPixelText('VIDA', 14, 24, '#475569', 'bold 11px monospace');
+        for (let i = 0; i < player.maxHp; i++) {
+          ctx.fillStyle = i < player.hp ? '#ef4444' : '#1f2937';
+          ctx.fillRect(62 + i * 22, 11, 16, 18);
+          if (i < player.hp) {
+            ctx.fillStyle = '#fca5a5';
+            ctx.fillRect(66 + i * 22, 14, 6, 7);
+          }
+        }
+        drawPixelText('SCORE: ' + score, 14, 52, '#facc15', 'bold 14px monospace');
+        drawPixelText('HI: ' + Math.max(score, hiScore), 14, 66, '#64748b', '10px monospace');
+        drawPixelText('GUILLERMO JOB SEEKER PRO', W / 2 - 128, 24, '#60a5fa', 'bold 13px monospace');
+        drawPixelText("beat'em up laboral — buenos aires 2026", W / 2 - 126, 42, '#475569', '10px monospace');
+        drawPixelText('OLA ' + (wave + 1), W - 80, 24, '#94a3b8', '10px monospace');
+        drawPixelText('Z=CV', W - 120, 52, '#facc15', 'bold 11px monospace');
+        drawPixelText('↑=SALTAR', W - 80, 52, '#60a5fa', 'bold 11px monospace');
+      }
+
+      function drawMsgs() {
+        msgs.forEach(m => {
+          ctx.globalAlpha = Math.max(0, m.life / 90);
+          ctx.font = 'bold 13px monospace';
+          ctx.shadowColor = m.color;
+          ctx.shadowBlur = 6;
+          ctx.fillStyle = m.color;
+          ctx.fillText(m.text, m.x, m.y);
+          ctx.shadowBlur = 0;
+          ctx.globalAlpha = 1;
+        });
+      }
+
+      function drawParts() {
+        parts.forEach(p => {
+          ctx.globalAlpha = p.life / 45;
+          ctx.fillStyle = p.col;
+          ctx.fillRect(p.x, p.y, 4, 4);
+          ctx.globalAlpha = 1;
+        });
+      }
+
+      function drawPlayer() {
+        const px = player.x;
+        const pyBase = (win && !badWin) ? FLOOR + Math.sin(gameTime * 0.3) * -25 : player.y;
+        if (player.invuln > 0 && Math.floor(player.invuln / 4) % 2 === 0 && !win) return;
+
+        ctx.save();
+        let x = px;
+        if (player.facing === -1) {
+          ctx.translate(px + 46, 0);
+          ctx.scale(-1, 1);
+          x = 0;
+        }
+
+        const bob = player.onGround && !win ? Math.sin(player.frame * 0.28) * 2 : 0;
+        const y = pyBase + bob;
+        const ls = player.onGround && !win ? Math.sin(player.frame * 0.28) * 6 : 0;
+        const jumping = !player.onGround && !win;
+
+        ctx.fillStyle = '#9ca3af';
+        if (!jumping) {
+          ctx.fillRect(x + 4, y + 64, 14, 9);
+          ctx.fillRect(x + 26, y + 64, 14, 9);
+          ctx.fillStyle = '#6b7280';
+          ctx.fillRect(x + 4, y + 64, 14, 4);
+          ctx.fillRect(x + 26, y + 64, 14, 4);
+        } else {
+          ctx.fillRect(x + 6, y + 68, 12, 6);
+          ctx.fillRect(x + 28, y + 68, 12, 6);
+        }
+
+        ctx.fillStyle = '#1d4ed8';
+        if (!jumping) {
+          ctx.fillRect(x + 8, y + 44, 12, 22 + ls);
+          ctx.fillRect(x + 26, y + 44, 12, 22 - ls);
+        } else {
+          ctx.fillRect(x + 4, y + 44, 14, 24);
+          ctx.fillRect(x + 26, y + 44, 14, 24);
+        }
+        ctx.fillStyle = '#1e40af';
+        ctx.fillRect(x + 8, y + 44, 12, 4);
+        ctx.fillRect(x + 26, y + 44, 12, 4);
+
+        ctx.fillStyle = '#1f2937'; ctx.fillRect(x + 5, y + 20, 36, 28);
+        ctx.fillStyle = '#374151'; ctx.fillRect(x + 17, y + 20, 3, 20); ctx.fillRect(x + 26, y + 20, 3, 20);
+        ctx.fillStyle = '#5a6a4a'; ctx.fillRect(x + 19, y + 22, 8, 22);
+        ctx.fillStyle = '#c49a6c'; ctx.fillRect(x + 17, y + 13, 12, 9);
+        ctx.fillStyle = '#d4a574'; ctx.fillRect(x + 9, y + 1, 28, 24);
+        ctx.fillStyle = '#2d1b0e';
+        ctx.fillRect(x + 8, y + 1, 30, 10);
+        ctx.fillRect(x + 8, y + 1, 6, 16);
+        ctx.fillRect(x + 32, y + 1, 6, 16);
+        ctx.fillStyle = '#1a0f07';
+        ctx.fillRect(x + 10, y + 1, 6, 6);
+        ctx.fillRect(x + 30, y + 1, 6, 6);
+        ctx.fillRect(x + 12, y + 13, 8, 3);
+        ctx.fillRect(x + 26, y + 13, 8, 3);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(x + 13, y + 17, 6, 5);
+        ctx.fillRect(x + 27, y + 17, 6, 5);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x + 15, y + 18, 2, 2);
+        ctx.fillRect(x + 29, y + 18, 2, 2);
+        ctx.fillStyle = '#b8895a'; ctx.fillRect(x + 19, y + 21, 8, 4);
+        ctx.fillStyle = '#2d1b0e';
+        ctx.fillRect(x + 10, y + 22, 26, 5);
+        ctx.fillRect(x + 11, y + 24, 24, 5);
+        ctx.fillStyle = '#3d2510'; ctx.fillRect(x + 12, y + 27, 20, 3);
+
+        const armSwing = player.onGround && !win ? Math.sin(player.frame * 0.28) * 5 : 0;
+        if (player.throwing > 0) {
+          ctx.fillStyle = '#111827'; ctx.fillRect(x + 38, y + 22, 20, 9);
+          ctx.fillStyle = '#c49a6c'; ctx.fillRect(x + 54, y + 20, 10, 12);
+        } else {
+          ctx.fillStyle = '#111827';
+          ctx.fillRect(x + 0, y + 22, 8, 22 - armSwing);
+          ctx.fillRect(x + 38, y + 22, 8, 22 + armSwing);
+        }
+        ctx.restore();
+      }
+
+      function drawProjectile(p) {
+        ctx.save();
+        ctx.fillStyle = '#f8fafc'; ctx.fillRect(p.x, p.y, 28, 20);
+        ctx.strokeStyle = '#475569'; ctx.strokeRect(p.x, p.y, 28, 20);
+        ctx.fillStyle = '#1d4ed8'; ctx.fillRect(p.x, p.y, 28, 4);
+        ctx.fillStyle = '#2563eb'; ctx.fillRect(p.x + 4, p.y + 7, 10, 2);
+        ctx.fillStyle = '#94a3b8'; ctx.fillRect(p.x + 4, p.y + 11, 18, 2); ctx.fillRect(p.x + 4, p.y + 15, 14, 2);
+        ctx.globalAlpha = 0.25; ctx.fillStyle = '#60a5fa';
+        const dir = p.speed > 0 ? -1 : 1;
+        ctx.fillRect(p.x + dir * 10, p.y + 4, 20, 12);
+        ctx.restore(); ctx.globalAlpha = 1;
+      }
+
+      function drawEnemyShot(s) {
+        ctx.save();
+        ctx.fillStyle = '#0f172a'; ctx.fillRect(s.x, s.y, s.w, s.h);
+        ctx.strokeStyle = '#22c55e'; ctx.strokeRect(s.x, s.y, s.w, s.h);
+        ctx.fillStyle = '#4ade80'; ctx.font = 'bold 10px monospace';
+        ctx.fillText(s.text, s.x + 6, s.y + 12);
+        ctx.restore();
+      }
+
+      function drawEnemy(e) {
+        const by = Math.sin(e.bob) * 2.5;
+        const ey = e.y + by;
+        ctx.save();
+        if (e.hitFlash > 0) ctx.globalAlpha = 0.7;
+
+        if (e.type === 'ninja') {
+          ctx.fillStyle = '#1a0a2e'; ctx.fillRect(e.x + 2, ey, 34, 55);
+          ctx.fillStyle = '#4c1d95'; ctx.fillRect(e.x + 6, ey, 26, 6);
+          ctx.fillStyle = '#7c3aed'; ctx.fillRect(e.x + 2, ey + 30, 34, 5);
+          ctx.fillStyle = '#0f0520'; ctx.fillRect(e.x + 6, ey + 8, 24, 18);
+          ctx.fillStyle = '#7c3aed'; ctx.fillRect(e.x + 8, ey + 12, 8, 6); ctx.fillRect(e.x + 22, ey + 12, 8, 6);
+          ctx.fillStyle = '#0f0520'; ctx.beginPath(); ctx.moveTo(e.x + 3, ey); ctx.lineTo(e.x + 19, ey - 16); ctx.lineTo(e.x + 35, ey); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#1a0a2e'; ctx.fillRect(e.x + 4, ey + 54, 12, 14); ctx.fillRect(e.x + 22, ey + 54, 12, 14);
+          ctx.fillStyle = '#ef4444'; ctx.fillRect(e.x + 36, ey + 18, 10, 14);
+          ctx.fillStyle = '#fff'; ctx.fillRect(e.x + 37, ey + 19, 8, 12);
+          ctx.fillStyle = '#ef4444'; ctx.fillRect(e.x + 38, ey + 21, 6, 2); ctx.fillRect(e.x + 38, ey + 25, 6, 2);
+          drawPixelText('NO', e.x + 38, ey + 30, '#ef4444', 'bold 9px monospace');
+        } else if (e.type === 'ghost') {
+          ctx.fillStyle = '#dde5f0'; ctx.fillRect(e.x + 2, ey, 36, 52);
+          ctx.beginPath(); ctx.arc(e.x + 20, ey + 2, 18, Math.PI, 0); ctx.fill();
+          ctx.fillRect(e.x + 2, ey + 44, 9, 12); ctx.fillRect(e.x + 18, ey + 46, 9, 10); ctx.fillRect(e.x + 29, ey + 44, 9, 12);
+          ctx.fillStyle = '#dc2626'; ctx.fillRect(e.x + 16, ey + 22, 8, 16); ctx.fillRect(e.x + 14, ey + 18, 12, 7);
+          ctx.fillStyle = '#334155'; ctx.fillRect(e.x + 9, ey + 16, 9, 10); ctx.fillRect(e.x + 26, ey + 16, 9, 10);
+          ctx.fillStyle = '#e2e8f0'; ctx.fillRect(e.x + 11, ey + 18, 3, 3); ctx.fillRect(e.x + 28, ey + 18, 3, 3);
+          ctx.fillStyle = '#475569'; ctx.fillRect(e.x + 10, ey + 32, 20, 5);
+          ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillRect(e.x + 30, ey - 24, 60, 18);
+          drawPixelText('te llamamos', e.x + 33, ey - 12, '#1e293b', '7px monospace');
+        } else if (e.type === 'ats') {
+          ctx.fillStyle = '#14532d'; ctx.fillRect(e.x + 2, ey, 36, 34);
+          ctx.fillStyle = '#166534'; ctx.fillRect(e.x + 2, ey, 36, 7);
+          ctx.fillStyle = '#4ade80'; ctx.fillRect(e.x + 6, ey + 2, 4, 4);
+          ctx.fillStyle = '#0f172a'; ctx.fillRect(e.x + 7, ey + 12, 22, 4); ctx.fillRect(e.x + 7, ey + 20, 22, 4); ctx.fillRect(e.x + 7, ey + 28, 10, 4);
+          ctx.fillStyle = '#22c55e'; ctx.fillRect(e.x + 26, ey + 24, 8, 8);
+          ctx.fillStyle = '#0f172a'; ctx.fillRect(e.x + 28, ey + 26, 4, 4);
+          ctx.fillStyle = '#15803d'; ctx.fillRect(e.x + 4, ey + 34, 12, 28); ctx.fillRect(e.x + 24, ey + 34, 12, 28);
+          ctx.fillStyle = '#16a34a'; ctx.fillRect(e.x + 12, ey + 34, 16, 26);
+          ctx.fillStyle = '#15803d'; ctx.fillRect(e.x + 36, ey + 14, 16, 8);
+          ctx.fillStyle = '#dc2626'; ctx.fillRect(e.x + 50, ey + 12, 10, 12);
+          drawPixelText('X', e.x + 53, ey + 21, '#fff', '8px monospace');
+        } else if (e.type === 'form') {
+          ctx.fillStyle = '#d97706'; ctx.fillRect(e.x, ey, 42, 62);
+          ctx.fillStyle = '#92400e';
+          ctx.fillRect(e.x + 2, ey + 7, 38, 5); ctx.fillRect(e.x + 2, ey + 15, 38, 5); ctx.fillRect(e.x + 2, ey + 23, 38, 5);
+          ctx.fillRect(e.x + 2, ey + 31, 38, 5); ctx.fillRect(e.x + 2, ey + 39, 38, 5); ctx.fillRect(e.x + 2, ey + 47, 20, 5);
+          ctx.fillStyle = '#78350f'; ctx.fillRect(e.x + 11, ey, 20, 8);
+          ctx.fillStyle = '#b45309'; ctx.fillRect(e.x + 16, ey - 5, 10, 10);
+          ctx.fillStyle = '#fcd34d'; ctx.fillRect(e.x + 6, ey + 54, 10, 8); ctx.fillRect(e.x + 26, ey + 54, 10, 8);
+          ctx.fillStyle = '#0f172a'; ctx.fillRect(e.x + 8, ey + 56, 6, 4); ctx.fillRect(e.x + 28, ey + 56, 6, 4);
+          drawPixelText('∞', e.x + 16, ey + 65, '#fef3c7', '9px monospace');
+        } else if (e.type === 'troll') {
+          ctx.fillStyle = '#0369a1'; ctx.fillRect(e.x, ey, 44, 64);
+          ctx.fillStyle = '#0284c7'; ctx.fillRect(e.x + 2, ey + 2, 40, 60);
+          ctx.fillStyle = '#0f172a'; ctx.fillRect(e.x + 4, ey + 8, 36, 38);
+          ctx.fillStyle = '#0ea5e9'; ctx.fillRect(e.x + 12, ey + 14, 8, 8); ctx.fillRect(e.x + 12, ey + 22, 8, 16); ctx.fillRect(e.x + 22, ey + 18, 10, 8); ctx.fillRect(e.x + 30, ey + 18, 2, 20);
+          ctx.fillStyle = '#fef3c7'; ctx.fillRect(e.x + 6, ey + 48, 32, 16);
+          ctx.fillStyle = '#0f172a'; ctx.fillRect(e.x + 10, ey + 52, 6, 5); ctx.fillRect(e.x + 28, ey + 52, 6, 5);
+          ctx.fillStyle = '#dc2626'; ctx.fillRect(e.x + 14, ey + 58, 16, 3); ctx.fillRect(e.x + 12, ey + 55, 4, 5); ctx.fillRect(e.x + 28, ey + 55, 4, 5);
+        } else if (e.type === 'boss') {
+          ctx.fillStyle = '#7f1d1d'; ctx.fillRect(e.x + 4, ey, 50, 80);
+          ctx.fillStyle = '#991b1b'; ctx.fillRect(e.x + 8, ey + 24, 42, 38);
+          ctx.fillStyle = '#fbbf24'; ctx.fillRect(e.x + 25, ey + 24, 8, 24); ctx.fillRect(e.x + 22, ey + 18, 14, 10);
+          ctx.fillStyle = '#b91c1c'; ctx.fillRect(e.x + 8, ey + 2, 42, 26);
+          ctx.fillStyle = '#7f1d1d'; ctx.fillRect(e.x + 8, ey + 2, 42, 8);
+          ctx.fillStyle = '#0f172a'; ctx.fillRect(e.x + 12, ey + 12, 12, 9); ctx.fillRect(e.x + 34, ey + 12, 12, 9);
+          ctx.fillStyle = '#dc2626'; ctx.fillRect(e.x + 14, ey + 14, 5, 5); ctx.fillRect(e.x + 36, ey + 14, 5, 5);
+          ctx.fillStyle = '#9b1c1c'; ctx.fillRect(e.x + 24, ey + 18, 10, 8);
+          ctx.fillStyle = '#0f172a'; ctx.fillRect(e.x + 18, ey + 24, 22, 8);
+          ctx.fillStyle = '#f87171'; ctx.fillRect(e.x + 22, ey + 26, 14, 4);
+          ctx.fillStyle = '#7f1d1d'; ctx.fillRect(e.x + 8, ey + 62, 18, 18); ctx.fillRect(e.x + 32, ey + 62, 18, 18);
+        }
+
+        const barW = e.w + 12;
+        ctx.fillStyle = '#1e293b'; ctx.fillRect(e.x - 6, ey - 22, barW, 7);
+        const ratio = e.hp / e.maxHp;
+        ctx.fillStyle = ratio > 0.5 ? '#22c55e' : ratio > 0.25 ? '#f59e0b' : '#ef4444';
+        ctx.fillRect(e.x - 6, ey - 22, barW * ratio, 7);
+        ctx.strokeStyle = '#334155'; ctx.strokeRect(e.x - 6, ey - 22, barW, 7);
+        drawPixelText(e.name, e.x - 4, ey - 26, e.type === 'boss' ? '#fbbf24' : '#fca5a5', 'bold 9px monospace');
+        ctx.restore();
+      }
+
+      function shoot() {
+        if (player.cooldown > 0 || over || win || badWin) return;
+        player.cooldown = 17;
+        player.throwing = 14;
+        const dir = player.facing;
+        projectiles.push({ x: dir === 1 ? player.x + 48 : player.x - 30, y: player.y + 24, w: 28, h: 20, speed: 9 * dir });
+      }
+
+      function enemyShootCode(enemy) {
+        enemyShots.push({
+          x: enemy.x - 32,
+          y: FLOOR + 26,
+          w: 32,
+          h: 10,
+          speed: -5.2,
+          text: CODE_SNIPPETS[Math.floor(Math.random() * CODE_SNIPPETS.length)]
+        });
+        addMsg('ATS lanzó código', enemy.x - 10, enemy.y - 18, '#86efac');
+      }
+
+      function spawnWaveEnemy() {
+        let pool;
+        if (wave < 1) pool = [0, 1, 2];
+        else if (wave < 2) pool = [0, 1, 2, 3, 4];
+        else pool = [0, 1, 2, 3, 4, 4, 5];
+
+        const tidx = pool[Math.floor(Math.random() * pool.length)];
+        const def = ENEMY_DEFS[tidx];
+        enemies.push({ ...def, x: W + 60, y: FLOOR, bob: Math.random() * 3.14, hitFlash: 0, shootTimer: def.shootCooldown });
+      }
+
+      function takeDamage(text, color) {
+        player.hp = Math.max(0, player.hp - 1);
+        player.invuln = 60;
+        addMsg(text, player.x - 10, player.y - 24, color);
+        burst(player.x + 23, player.y + 36, false);
+        if (player.hp <= 0) {
+          if (score > hiScore) {
+            hiScore = score;
+            localStorage.setItem('gjsHi', hiScore);
+          }
+          running = false;
+          over = true;
+        }
+      }
+
+      function checkFinalStates() {
+        if (score >= MAX_SCORE && !win && !badWin) {
+          running = false;
+          if (player.hp === player.maxHp) {
+            win = true;
+          } else {
+            badWin = true;
+          }
+        }
+      }
+
+      function update() {
+        gameTime++;
+        bgOff++;
+
+        const newWave = Math.floor(score / 600);
+        if (newWave > wave) {
+          wave = newWave;
+          addMsg('⚠ OLA ' + (wave + 1) + ' — enemigos más duros!', W / 2 - 140, 200, '#f87171');
+        }
+
+        if (keys['ArrowLeft'] || keys['a'] || keys['A']) { player.x -= player.speed; player.facing = -1; }
+        if (keys['ArrowRight'] || keys['d'] || keys['D']) { player.x += player.speed; player.facing = 1; }
+        player.x = Math.max(10, Math.min(W - 58, player.x));
+
+        if ((keys['ArrowUp'] || keys['w'] || keys['W'] || keys[' ']) && player.onGround) {
+          player.vy = -15;
+          player.onGround = false;
+        }
+
+        player.vy += 0.72;
+        player.y += player.vy;
+        if (player.y >= FLOOR) {
+          player.y = FLOOR;
+          player.vy = 0;
+          player.onGround = true;
+        }
+
+        if (player.cooldown > 0) player.cooldown--;
+        if (player.throwing > 0) player.throwing--;
+        if (player.invuln > 0) player.invuln--;
+
+        player.fTimer++;
+        if (player.fTimer > 6) { player.fTimer = 0; player.frame++; }
+
+        spawnT--;
+        if (spawnT <= 0) {
+          spawnWaveEnemy();
+          spawnT = Math.max(40, 80 - wave * 10) + Math.random() * 50;
+        }
+
+        projectiles.forEach(p => p.x += p.speed);
+        projectiles = projectiles.filter(p => p.x > -60 && p.x < W + 60);
+
+        enemyShots.forEach(s => s.x += s.speed);
+        enemyShots = enemyShots.filter(s => s.x + s.w > -30 && s.x < W + 40);
+
+        const destroyedShots = new Set();
+        const destroyedProjectiles = new Set();
+        projectiles.forEach((p, pi) => {
+          enemyShots.forEach((s, si) => {
+            if (!destroyedProjectiles.has(pi) && !destroyedShots.has(si) && rect(p, s)) {
+              destroyedProjectiles.add(pi);
+              destroyedShots.add(si);
+              addMsg('CV > ATS', s.x - 6, s.y - 10, '#22c55e');
+              burst(s.x + s.w / 2, s.y + s.h / 2, false);
+            }
+          });
+        });
+        projectiles = projectiles.filter((_, i) => !destroyedProjectiles.has(i));
+        enemyShots = enemyShots.filter((_, i) => !destroyedShots.has(i));
+
+        enemies.forEach(e => {
+          e.x -= e.speed;
+          e.bob += 0.07;
+          if (e.hitFlash > 0) e.hitFlash--;
+
+          if (e.type === 'ats') {
+            e.shootTimer--;
+            if (e.shootTimer <= 0) {
+              enemyShootCode(e);
+              e.shootTimer = 110 + Math.random() * 70;
+            }
+          }
+
+          if (player.invuln === 0 && rect(e, player)) {
+            addMsg('Te tocó el sistema', player.x - 18, player.y - 42, '#f87171');
+            e.x = W + 100;
+            takeDamage('-1 MOTIVACIÓN', '#fca5a5');
+          }
+        });
+
+        enemyShots.forEach(s => {
+          const playerHitbox = {
+            x: player.x + 8,
+            y: player.y + 24,
+            w: player.w - 16,
+            h: player.h - 24
+          };
+          if (player.invuln === 0 && rect(s, playerHitbox)) {
+            s.x = -300;
+            takeDamage('-1 ENERGÍA por código ATS', '#86efac');
+          }
+        });
+
+        const deadProjectiles = new Set();
+        const deadEnemies = new Set();
+
+        projectiles.forEach((p, pi) => {
+          enemies.forEach((e, ei) => {
+            if (!deadProjectiles.has(pi) && !deadEnemies.has(ei) && rect(p, e)) {
+              e.hp--;
+              e.hitFlash = 8;
+              if (e.hp <= 0) {
+                const isBoss = e.type === 'boss';
+                burst(e.x + e.w / 2, e.y + e.h / 2, isBoss);
+                addMsg(XP[Math.min(xpIdx % XP.length, XP.length - 1)], e.x - 16, e.y - 34, '#93c5fd');
+                xpIdx++;
+                score += isBoss ? 500 : 100;
+                ticker.textContent = 'SCORE: ' + score + ' XP';
+                deadEnemies.add(ei);
+              } else {
+                addMsg('-HP!', e.x + 8, e.y - 12, '#fde68a');
+              }
+              deadProjectiles.add(pi);
+            }
+          });
+        });
+
+        projectiles = projectiles.filter((_, i) => !deadProjectiles.has(i));
+        enemies = enemies.filter((_, i) => !deadEnemies.has(i));
+
+        msgs.forEach(m => { m.y -= 0.6; m.life--; });
+        msgs = msgs.filter(m => m.life > 0);
+
+        parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life--; });
+        parts = parts.filter(p => p.life > 0);
+
+        checkFinalStates();
+      }
+
+      function drawStartScreen() {
+        ctx.fillStyle = 'rgba(0,0,0,0.68)';
+        ctx.fillRect(W / 2 - 270, H / 2 - 80, 540, 148);
+        ctx.strokeStyle = '#1e40af'; ctx.lineWidth = 2;
+        ctx.strokeRect(W / 2 - 270, H / 2 - 80, 540, 148);
+        drawPixelText('GUILLERMO JOB SEEKER PRO', W / 2 - 180, H / 2 - 36, '#60a5fa', 'bold 22px monospace');
+        drawPixelText('Derrota al mercado laboral porteño', W / 2 - 132, H / 2 - 8, '#94a3b8', '13px monospace');
+        drawPixelText('▶ INICIAR o presioná Z', W / 2 - 102, H / 2 + 28, '#facc15', 'bold 14px monospace');
+        drawPixelText('Enemigos: Ninja · HR Fantasma · ATS con código · Formulario · Troll · Boss RRHH', W / 2 - 260, H / 2 + 56, '#475569', '11px monospace');
+      }
+
+      function drawWinScreen() {
+        ctx.fillStyle = 'rgba(0,0,0,0.82)';
+        ctx.fillRect(W / 2 - 290, H / 2 - 130, 580, 260);
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(W / 2 - 290, H / 2 - 130, 580, 260);
+
+        drawPixelText('LLEGASTE A LA FINAL', W / 2 - 150, H / 2 - 84, '#4ade80', 'bold 24px monospace');
+        drawPixelText('ESTÁS CONTRATADO', W / 2 - 140, H / 2 - 46, '#facc15', 'bold 22px monospace');
+        drawPixelText('Run perfecta', W / 2 - 60, H / 2 - 16, '#93c5fd', '12px monospace');
+
+        // overlay tipo CV dentro del juego
+        ctx.fillStyle = '#0b1628';
+        ctx.fillRect(W / 2 - 220, H / 2 + 6, 440, 92);
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(W / 2 - 220, H / 2 + 6, 440, 92);
+
+        drawPixelText('CV REAL // GUILLERMO CORONEL', W / 2 - 150, H / 2 + 26, '#93c5fd', 'bold 13px monospace');
+        drawPixelText('Soporte Tecnico // Team Leader // RRPP', W / 2 - 176, H / 2 + 48, '#e2e8f0', '12px monospace');
+        drawPixelText('Innovacion Publica // IA + Musica', W / 2 - 164, H / 2 + 68, '#e2e8f0', '12px monospace');
+        drawPixelText('ENTER o boton VER CV REAL', W / 2 - 124, H / 2 + 90, '#60a5fa', 'bold 12px monospace');
+      }
+
+      function drawBadWinScreen() {
+        ctx.fillStyle = 'rgba(0,0,0,0.82)';
+        ctx.fillRect(W / 2 - 290, H / 2 - 130, 580, 260);
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(W / 2 - 290, H / 2 - 130, 580, 260);
+
+        drawPixelText('LLEGASTE AL FINAL', W / 2 - 130, H / 2 - 72, '#f87171', 'bold 20px monospace');
+        drawPixelText('pero no has sido seleccionado', W / 2 - 170, H / 2 - 38, '#fca5a5', 'bold 16px monospace');
+        drawPixelText('Reintentá sin perder energía', W / 2 - 130, H / 2 - 10, '#93c5fd', '12px monospace');
+
+        ctx.fillStyle = '#0b1628';
+        ctx.fillRect(W / 2 - 220, H / 2 + 18, 440, 92);
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(W / 2 - 220, H / 2 + 18, 440, 92);
+
+        drawPixelText('CV REAL // GUILLERMO CORONEL', W / 2 - 150, H / 2 + 38, '#93c5fd', 'bold 13px monospace');
+        drawPixelText('Soporte Tecnico // Team Leader // RRPP', W / 2 - 176, H / 2 + 60, '#e2e8f0', '12px monospace');
+        drawPixelText('ENTER o boton VER CV REAL', W / 2 - 124, H / 2 + 84, '#60a5fa', 'bold 12px monospace');
+      }
+
+      function drawGameOver() {
+        ctx.fillStyle = 'rgba(0,0,0,0.76)';
+        ctx.fillRect(W / 2 - 260, H / 2 - 86, 520, 180);
+        ctx.strokeStyle = '#991b1b'; ctx.lineWidth = 2;
+        ctx.strokeRect(W / 2 - 260, H / 2 - 86, 520, 180);
+        drawPixelText('GAME OVER LABORAL', W / 2 - 175, H / 2 - 30, '#ef4444', 'bold 28px monospace');
+        drawPixelText('Score: ' + score + ' XP', W / 2 - 60, H / 2 + 10, '#f8fafc', '13px monospace');
+        if (score >= hiScore && score > 0) drawPixelText('¡NUEVO RÉCORD!', W / 2 - 76, H / 2 + 36, '#facc15', '13px monospace');
+        else drawPixelText('Récord: ' + hiScore + ' XP', W / 2 - 66, H / 2 + 36, '#64748b', '13px monospace');
+        drawPixelText('El sistema te filtró... pero Guillermo no se rinde. Reintentar', W / 2 - 230, H / 2 + 66, '#93c5fd', 'bold 12px monospace');
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        drawBG();
+        projectiles.forEach(drawProjectile);
+        enemyShots.forEach(drawEnemyShot);
+        enemies.forEach(drawEnemy);
+        drawPlayer();
+        drawParts();
+        drawMsgs();
+        drawHUD();
+        if (!running && !over && !win && !badWin && score === 0) drawStartScreen();
+        if (win) drawWinScreen();
+        if (badWin) drawBadWinScreen();
+        if (over) drawGameOver();
+      }
+
+      function loop() {
+        if (!running) { draw(); return; }
+        update();
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      document.addEventListener('keydown', (e) => {
+        keys[e.key] = true;
+        if (e.key === 'z' || e.key === 'Z') {
+          if (!running && !over && !win && !badWin) start();
+          else shoot();
+        }
+        if (e.key === 'r' || e.key === 'R') reset();
+        if (e.key === 'Enter' && (win || badWin)) openPDF();
+        if (['ArrowUp', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
+      });
+
+      document.addEventListener('keyup', (e) => {
+        keys[e.key] = false;
+      });
+
+      document.getElementById('btn-start').onclick = () => {
+        if (!running && !over && !win && !badWin) start();
+      };
+      document.getElementById('btn-reset').onclick = reset;
+      document.getElementById('btn-cv').onclick = openPDF;
+      document.getElementById('btn-open-pdf').onclick = openPDF;
+
+      function mobBind(id, key, fn) {
+        const el = document.getElementById(id);
+        ['touchstart', 'mousedown'].forEach(ev => el.addEventListener(ev, (e) => {
+          e.preventDefault();
+          keys[key] = true;
+          if (fn) fn();
+        }, { passive: false }));
+        ['touchend', 'mouseup', 'mouseleave'].forEach(ev => el.addEventListener(ev, () => {
+          keys[key] = false;
+        }));
+      }
+
+      mobBind('m-left', 'ArrowLeft');
+      mobBind('m-right', 'ArrowRight');
+      mobBind('m-jump', 'ArrowUp', () => {
+        if (!running && !over && !win && !badWin) start();
+      });
+
+      const mobileAttack = document.getElementById('m-cv-attack');
+      ['touchstart', 'mousedown'].forEach(ev => mobileAttack.addEventListener(ev, (e) => {
+        e.preventDefault();
+        if (!running && !over && !win && !badWin) start();
+        else shoot();
+      }, { passive: false }));
+
+      reset();
+    })();
+  </script>
+</body>
+</html>
