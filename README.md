@@ -24,7 +24,7 @@ Soy **Manager BPO & Team Leader** con 9 años de experiencia liderando equipos d
 ## 🚀 ¡JUGALO AHORA!
 No bajes el código, viví la experiencia directamente en tu navegador:
 
-👉 **[HACE CLIC AQUÍ PARA JUGAR] (TU_LINK_DE_VERCEL_AQUÍ)**
+👉 **[HACE CLIC AQUÍ PARA JUGAR] (https://job-seeker-pro-two.vercel.app/ )**
 
 ---
 *Si lográs pasar el nivel del Reclutador, dentro del juego tenés el botón para descargar mi CV real en PDF.*
